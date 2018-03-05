@@ -24,6 +24,7 @@ ui <- fluidPage(theme= shinytheme("superhero"),
                    tabPanel("App",
                             textInput("ti","Enter your text here"),
                             textOutput("textpred"),
+                            textOutput("Wordcount"),
                             textOutput("titoks")      
                             
                             
@@ -52,12 +53,24 @@ ui <- fluidPage(theme= shinytheme("superhero"),
 # Define server logic required to draw a histogram
 server <- function(input, output) {
    
-  output$titoks <- renderText({
+  output$Wordcount <- renderText({
     nwords <- stri_count_words(input$ti)
     
     nwords
     
-  }) 
+  })
+  output$titoks <- renderText({
+      nwords <- stri_count_words(input$ti)
+      if (nwords <2)
+          return()
+      else if (nwords<3){
+          titokens <- unlist(unnest_tokens(as_data_frame(input$ti),input = value, output = gram, token='ngrams', n=2))
+      }
+      else{
+          titokens <- unlist(unnest_tokens(as_data_frame(input$ti),input = value, output = gram, token='ngrams', n=3))
+      }
+      
+  })
   
   
 }
