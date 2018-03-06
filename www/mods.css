@@ -1,0 +1,13 @@
+#textpred table {
+	text-align: center;
+	background-color: lightgrey;
+	border-collapse: collapse;
+	
+}
+
+#textpred th, td {
+	text-align: center;
+	background-color: lightgrey;
+	border: 5px solid black;
+	font-size: 20px;
+}

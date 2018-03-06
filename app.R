@@ -13,8 +13,13 @@ library(tidytext)
 library(stringi)
 library(shinythemes)
 
+#textpred
+
 # Define UI for application that draws a histogram
 ui <- fluidPage(theme= shinytheme("superhero"),
+                
+                includeCSS("www/mods.css"),
+                
    
    # Application title
    titlePanel("Initial Text Prediction App"),
@@ -22,32 +27,15 @@ ui <- fluidPage(theme= shinytheme("superhero"),
    # Sidebar with a slider input for number of bins 
    navlistPanel(widths=c(2,10),
                    tabPanel("App",
-                            textInput("ti","Enter your text here"),
-                            textOutput("textpred"),
+                            textInput("ti","Enter your text here", width='90%'),
+                            br(),
+                            tableOutput("textpred"),
                             textOutput("Wordcount"),
                             textOutput("titoks")      
-                            
-                            
-                            
-                            
                             ),
                    tabPanel("Details")
-                   
-         #sliderInput("bins",
-                     # "Number of bins:",
-                     # min = 1,
-                     # max = 50,
-                     # value = 30)
-      )#,
-      
-      # Show a plot of the generated distribution
-      # mainPanel(
-      #     textInput("ti","Enter your text here"),
-      #     textOutput("textpred"),
-      #     textOutput("titoks")
-      #    #plotOutput("distPlot")
-    #  )
-   #)
+
+      )
 )
 
 # Define server logic required to draw a histogram
@@ -64,13 +52,25 @@ server <- function(input, output) {
       if (nwords <2)
           return()
       else if (nwords<3){
-          titokens <- unlist(unnest_tokens(as_data_frame(input$ti),input = value, output = gram, token='ngrams', n=2))
+          titokens <- unlist(unnest_tokens(as_data_frame(input$ti),
+                                           input = value, output = gram, token='ngrams', n=2))
       }
       else{
-          titokens <- unlist(unnest_tokens(as_data_frame(input$ti),input = value, output = gram, token='ngrams', n=3))
+          titokens <- unlist(unnest_tokens(as_data_frame(input$ti),
+                                           input = value, output = gram, token='ngrams', n=3))
+          ln <- length(titokens)
+          titokens[ln]
       }
       
   })
+  output$textpred <- renderTable({
+      x_test <- data.frame(x=c("This","Is","Test"))
+      
+      x_test <- t(x_test)
+      
+      x_test
+      
+  }, colnames = FALSE, bordered = TRUE, width='90%')
   
   
 }
