@@ -40,6 +40,14 @@ ui <- fluidPage(theme= shinytheme("superhero"),
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
+  
+  # load ngram data add progress indicator
+  ngramvals <- reactiveValues()
+  
+  ngramvals$four <- read_csv('data/4gram.csv')
+  ngramvals$three <- read_csv('data/3gram.csv')
+  ngramvals$two <- read_csv('data/2gram.csv')
+  
    
   output$Wordcount <- renderText({
     nwords <- stri_count_words(input$ti)
@@ -70,7 +78,7 @@ server <- function(input, output) {
       
       x_test
       
-  }, colnames = FALSE, bordered = TRUE, width='90%')
+  }, colnames = FALSE, bordered = TRUE, width='90%', striped = TRUE)
   
   
 }

@@ -5,9 +5,8 @@
 	
 }
 
-#textpred th, td {
-	text-align: center;
-	background-color: lightgrey;
+#textpred table,th, td {
 	border: 5px solid black;
 	font-size: 20px;
+	color:red;
 }
