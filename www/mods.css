@@ -10,3 +10,10 @@
 	font-size: 20px;
 	color:red;
 }
+
+.shiny-notification{
+  position: fixed;
+  top: 33%;
+  left: 33%;
+  right: 33%;
+}
