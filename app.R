@@ -78,7 +78,8 @@ ui <- fluidPage(theme= shinytheme("superhero"),
 
       ),
    hr(),
-   print("~~~my disclaimer~~~~")
+   br(),
+   img(src='images/Footer2.png', class="center",style="display: block; margin-left: auto; margin-right: auto;", width='189px')
 )
 
 # Define server logic required to draw a histogram
