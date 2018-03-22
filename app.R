@@ -12,6 +12,7 @@ library(tidyverse)
 library(tidytext)
 library(stringi)
 library(shinythemes)
+library(rhandsontable)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(theme= shinytheme("superhero"),
@@ -20,7 +21,7 @@ ui <- fluidPage(theme= shinytheme("superhero"),
                 
    
    # Application title
-   titlePanel("Initial Text Prediction App"),
+   titlePanel("Swiftkey Text Prediction App"),
    
    # Sidebar with a slider input for number of bins 
    navlistPanel(widths=c(2,10),
@@ -29,8 +30,9 @@ ui <- fluidPage(theme= shinytheme("superhero"),
                             br(),
                             "After entering a minimum of three words the app 
                             will attempt to predict the next word",
-                            tableOutput("textpred")#,
-                            #textOutput("Wordcount"),
+                            tableOutput("textpred"),
+                            #box(width=10,
+                            rHandsontableOutput("textpred2")#)#,
                             #textOutput("titoks")      
                             ),
                    tabPanel("Details",
@@ -55,27 +57,37 @@ ui <- fluidPage(theme= shinytheme("superhero"),
                             been entered",
                             br(),
                             h5('The code beneath'),
-                            "The main code of the app can be found below and can be copied for portability.
-                            The ngram models can also be downloaded to quickly get your model up and running.",
-                            code('fourg_test <- function(inputstring){
-                                inputsplit <- strsplit(inputstring, split=" ")
-                                out.str <- unlist(inputsplit)
-                                
-                                l <- length(out.str)
-                                w1 <- out.str[l-2]
-                                w2 <- out.str[l-1]
-                                w3 <- out.str[l]
-                                
-                                tgtdf <- ngramvals$four
-                                #str(tgtdf)
-                                out.df <- tgtdf %>%
-                                    filter(word1==w1, word2==w2, word3==w3) %>%
-                                    arrange(desc(n))%>%
-                                    filter(row_number() <=3) %>%
-                                    select(word4) %>%
-                                    as_tibble()
-                            }'))
+                            "A sample of the main code of the app can be found below and can be copied for portability.
+                            The full code and ngram models can also be downloaded to quickly get your model up and running.",
+                            br(),                            
+                            code('fourg_test <- function(inputstring){'),br(),
+                            code('     inputsplit <- strsplit(inputstring, split=" ")'),br(),
+                            code('     out.str <- unlist(inputsplit)'),br(),
+                            br(),    
+                            code('     l <- length(out.str)'),br(),
+                            code('     w1 <- out.str[l-2]'),br(),
+                            code('     w2 <- out.str[l-1]'),br(),
+                            code('     w3 <- out.str[l]'),br(),
+                             br(),   
+                            code('     tgtdf <- ngramvals$four'),br(),
+                             br(),  
+                            code('    out.df <- tgtdf %>%'),br(),
+                            code('        filter(word1==w1, word2==w2, word3==w3) %>%'),br(),
+                            code('        arrange(desc(n))%>%'),br(),
+                            code('        filter(row_number() <=3) %>%'),br(),
+                            code('        select(word4) %>%'),br(),
+                            code('        as_tibble()'),br(),
+                            code('}'),
+                            br(),
+                            "Download the main code here",br(),
+                            downloadButton("downloadCode", "Download Code"),br(),
+                            
+                            
+                            "Download the ngram models here", br(),
+                            downloadButton("downloadData", "Download Data"))
+                
 
+                            
       ),
    hr(),
    br(),
@@ -162,8 +174,8 @@ server <- function(input, output) {
   
   model_wrapper <- function(inputstring){
       OutData <- fourg_test(inptoks())
-      str(OutData)
-      length(OutData)
+      #str(OutData)
+      #length(OutData)
       if(nrow(OutData)==0){
           OutData <- threeg_test(inptoks())
           str(OutData)
@@ -237,6 +249,37 @@ server <- function(input, output) {
       #as.character(inptoks())
       
   }, colnames = FALSE, bordered = TRUE, width='90%', striped = TRUE)
+  
+  output$textpred2 <- renderRHandsontable({
+      
+      nwords <- stri_count_words(input$ti)
+      if (nwords <3)# | length(input$ti==0))
+          return()
+      
+      OutData <- model_wrapper(inptoks())
+      
+      rhandsontable(t(OutData), colHeaders = NULL, rowHeaders = NULL, stretchH='all')
+      #head(ngramvals$four,10)
+      
+      #as.character(inptoks())
+      #m
+      
+  })#, colnames = FALSE, bordered = TRUE, width='90%', striped = TRUE)
+  
+  output$downloadData <- downloadHandler(
+      filename="grammodel.zip",
+      content = function(file){
+          file.copy("./data/grammodels.zip",file)
+      }
+      
+  )
+  
+  output$downloadCode <- downloadHandler(
+      filename = "code.txt",
+      content = function(file){
+          file.copy("./data/servercode.txt",file)
+      }
+  )
   
   
 }
