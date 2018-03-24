@@ -12,7 +12,7 @@ library(tidyverse)
 library(tidytext)
 library(stringi)
 library(shinythemes)
-library(rhandsontable)
+#library(rhandsontable)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(theme= shinytheme("superhero"),
@@ -27,13 +27,17 @@ ui <- fluidPage(theme= shinytheme("superhero"),
    navlistPanel(widths=c(2,10),
                    tabPanel("App",
                             textInput("ti","Enter your text here", width='90%'),
+                            #br(),
+                            uiOutput("butts", width='90%'),
                             br(),
+                            br(), 
+                            
                             "After entering a minimum of three words the app 
-                            will attempt to predict the next word",
-                            tableOutput("textpred"),
+                            will attempt to predict the next word"#,
+                            #tableOutput("textpred")#,
                             #box(width=10,
-                            rHandsontableOutput("textpred2")#)#,
-                            #textOutput("titoks")      
+                            #rHandsontableOutput("textpred2")#)#,
+                            #textOutput("hot")      
                             ),
                    tabPanel("Details",
                             h4('Origins of the App'),
@@ -95,7 +99,7 @@ ui <- fluidPage(theme= shinytheme("superhero"),
 )
 
 # Define server logic required to draw a histogram
-server <- function(input, output) {
+server <- function(input, output, session) {
   
     init <- 0
     
@@ -178,12 +182,12 @@ server <- function(input, output) {
       #length(OutData)
       if(nrow(OutData)==0){
           OutData <- threeg_test(inptoks())
-          str(OutData)
+          #str(OutData)
       }
 
       if(nrow(OutData)==0){
           OutData <- twog_test(inptoks())
-          str(OutData)
+          #str(OutData)
       }
 
       if(nrow(OutData)==0){
@@ -250,22 +254,7 @@ server <- function(input, output) {
       
   }, colnames = FALSE, bordered = TRUE, width='90%', striped = TRUE)
   
-  output$textpred2 <- renderRHandsontable({
-      
-      nwords <- stri_count_words(input$ti)
-      if (nwords <3)# | length(input$ti==0))
-          return()
-      
-      OutData <- model_wrapper(inptoks())
-      
-      rhandsontable(t(OutData), colHeaders = NULL, rowHeaders = NULL, stretchH='all')
-      #head(ngramvals$four,10)
-      
-      #as.character(inptoks())
-      #m
-      
-  })#, colnames = FALSE, bordered = TRUE, width='90%', striped = TRUE)
-  
+
   output$downloadData <- downloadHandler(
       filename="grammodel.zip",
       content = function(file){
@@ -281,7 +270,81 @@ server <- function(input, output) {
       }
   )
   
+  observeEvent(input$W1,{
+      x <- input$ti
+      OutData <- model_wrapper(inptoks())
+      selected_word <- OutData[1,1]
+      updateTextInput(session,'ti',value=paste(x,selected_word))
+
+  })
   
+  observeEvent(input$W2,{
+      x <- input$ti
+      OutData <- model_wrapper(inptoks())
+      selected_word <- OutData[2,1]
+      updateTextInput(session,'ti',value=paste(x,selected_word))
+      
+  })
+  
+  observeEvent(input$W3,{
+      x <- input$ti
+      OutData <- model_wrapper(inptoks())
+      selected_word <- OutData[3,1]
+      updateTextInput(session,'ti',value=paste(x,selected_word))
+      
+  })
+  
+  output$butts <- renderUI({
+      nwords <- stri_count_words(input$ti)
+      if (nwords <3)# | length(input$ti==0))
+          return()
+      
+      OutData <- model_wrapper(inptoks())
+      
+      if (nrow(OutData)==3){
+          l1 <- OutData[1,1]
+          l2 <- OutData[2,1]
+          l3 <- OutData[3,1]
+          
+          tagList(
+            column(width=11,      
+                actionButton("W1",l1, width='33%', icon = icon('angle-double-up')),
+                actionButton("W2",l2, width='33%', icon = icon('angle-double-up')),
+                actionButton("W3",l3, width='33%', icon = icon('angle-double-up')))
+                )
+      } else if (nrow(OutData)==2){
+          l1 <- OutData[1,1]
+          l2 <- OutData[2,1]
+          #l3 <- OutData[3,1]
+          
+          tagList(
+              column(width=11,      
+              actionButton("W1",l1, width='49%', icon = icon('angle-double-up')),
+              actionButton("W2",l2, width='49%', icon = icon('angle-double-up')))#,
+              #actionButton("W3",l3, width='33%', icon = icon('angle-double-up')))
+          )
+      } else if (nrow(OutData)==1 & OutData[1,1]!='The specified phrase is not contained within the loaded dictionaries'){
+          l1 <- OutData[1,1]
+          #l2 <- OutData[2,1]
+          #l3 <- OutData[3,1]
+          
+          tagList(
+              column(width=11,      
+                     actionButton("W1",l1, width='98%', icon = icon('angle-double-up')))#,
+                     #actionButton("W2",l2, width='50%', icon = icon('angle-double-up')))#,
+              #actionButton("W3",l3, width='33%', icon = icon('angle-double-up')))
+          )
+      } else {
+          tagList(
+              column(width=11,
+                     actionButton("W4","The specified phrase is not contained within the loaded dictionaries",
+                     width='98%', icon=icon('ban',class='glyphred')))
+          )
+      }
+      
+  })
+  
+  session$onSessionEnded(stopApp)
 }
 
 # Run the application 
