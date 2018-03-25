@@ -33,7 +33,8 @@ ui <- fluidPage(theme= shinytheme("superhero"),
                             br(), 
                             
                             "After entering a minimum of three words the app 
-                            will attempt to predict the next word"#,
+                            will attempt to predict the next word. 
+                            You can then click on the word to update the text string"#,
                             #tableOutput("textpred")#,
                             #box(width=10,
                             #rHandsontableOutput("textpred2")#)#,
@@ -199,28 +200,28 @@ server <- function(input, output, session) {
   
   
   
-  output$Wordcount <- renderText({
-    nwords <- stri_count_words(input$ti)
-    
-    nwords
-    
-  })
-  output$titoks <- renderText({
-      nwords <- stri_count_words(input$ti)
-      if (nwords <2 | length(input$ti==0))
-          return()
-      else if (nwords<3){
-          titokens <- unlist(unnest_tokens(as_data_frame(input$ti),
-                                           input = value, output = gram, token='ngrams', n=2))
-      }
-      else{
-          titokens <- unlist(unnest_tokens(as_data_frame(input$ti),
-                                           input = value, output = gram, token='ngrams', n=3))
-          ln <- length(titokens)
-          titokens[ln]
-      }
-      
-  })
+  # output$Wordcount <- renderText({
+  #   nwords <- stri_count_words(input$ti)
+  #   
+  #   nwords
+  #   
+  # })
+  # output$titoks <- renderText({
+  #     nwords <- stri_count_words(input$ti)
+  #     if (nwords <2 | length(input$ti==0))
+  #         return()
+  #     else if (nwords<3){
+  #         titokens <- unlist(unnest_tokens(as_data_frame(input$ti),
+  #                                          input = value, output = gram, token='ngrams', n=2))
+  #     }
+  #     else{
+  #         titokens <- unlist(unnest_tokens(as_data_frame(input$ti),
+  #                                          input = value, output = gram, token='ngrams', n=3))
+  #         ln <- length(titokens)
+  #         titokens[ln]
+  #     }
+  #     
+  # })
   
   inptoks <- reactive({
       nwords <- stri_count_words(input$ti)
@@ -239,20 +240,20 @@ server <- function(input, output, session) {
       }
       outtoks
   })
-  output$textpred <- renderTable({
-      
-      nwords <- stri_count_words(input$ti)
-      if (nwords <3)# | length(input$ti==0))
-          return()
-      
-      OutData <- model_wrapper(inptoks())
-      
-      t(OutData)
-      #head(ngramvals$four,10)
-      
-      #as.character(inptoks())
-      
-  }, colnames = FALSE, bordered = TRUE, width='90%', striped = TRUE)
+  # output$textpred <- renderTable({
+  #     
+  #     nwords <- stri_count_words(input$ti)
+  #     if (nwords <3)# | length(input$ti==0))
+  #         return()
+  #     
+  #     OutData <- model_wrapper(inptoks())
+  #     
+  #     t(OutData)
+  #     #head(ngramvals$four,10)
+  #     
+  #     #as.character(inptoks())
+  #     
+  # }, colnames = FALSE, bordered = TRUE, width='90%', striped = TRUE)
   
 
   output$downloadData <- downloadHandler(
