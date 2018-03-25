@@ -12,6 +12,7 @@ library(tidyverse)
 library(tidytext)
 library(stringi)
 library(shinythemes)
+library(data.table)
 #library(rhandsontable)
 
 # Define UI for application that draws a histogram
@@ -111,14 +112,19 @@ server <- function(input, output, session) {
       withProgress(message = 'Loading Dictionaries', value = 0, {
   
           incProgress(0/3, detail = paste("Loading part", 1))        
-  ngramvals$four <- read_csv('data/4gram.csv')
+  ngramvals$four <- fread('data/4gram_sngl.csv')
+  setkey(ngramvals$four,word)
   incProgress(1/3, detail = paste("Loading part", 2))
   
-  ngramvals$three <- read_csv('data/3gram.csv')
+  ngramvals$three <- fread('data/3gram_sngl.csv')
+  setkey(ngramvals$three,word)
   incProgress(2/3, detail = paste("Loading part", 3))
-  ngramvals$two <- read_csv('data/2gram.csv')
+  ngramvals$two <- fread('data/2gram.csv')
+  setkey(ngramvals$two,word1)
   #incProgress(3/3, detail = paste("Doing part", 3))
   init <- 1
+  
+  
       })
   })
   
@@ -131,14 +137,23 @@ server <- function(input, output, session) {
       w2 <- out.str[l-1]
       w3 <- out.str[l]
       
+      wd <- paste(w1,w2,w3,sep="_")
+      
       tgtdf <- ngramvals$four
-      #str(tgtdf)
-      out.df <- tgtdf %>%
-          filter(word1==w1, word2==w2, word3==w3) %>%
-          arrange(desc(n))%>%
-          filter(row_number() <=3) %>%
-          select(word4) %>%
-          as_tibble()
+      str(tgtdf)
+      out.df <- tgtdf[wd,nomatch=0][order(-n)][,word4]
+      tl <- length(out.df)
+      if(tl>=3){
+          out.df[1:3]
+      }else if(tl==1|tl==2){
+          out.df[1:tl]
+      }else {out.df}
+      
+              # filter(word==wd) %>%
+          # arrange(desc(n))%>%
+          # filter(row_number() <=3) %>%
+          # select(word4) %>%
+          # as_tibble()
   }
   
   threeg_test <- function(inputstring){
@@ -149,14 +164,24 @@ server <- function(input, output, session) {
       w1 <- out.str[l-1]
       w2 <- out.str[l]
       
+      wd <- paste(w1,w2,sep="_")
+      
       tgtdf <- ngramvals$three
       #str(tgtdf)
-      out.df <- tgtdf %>%
-          filter(word1==w1, word2==w2) %>%
-          arrange(desc(n))%>%
-          filter(row_number() <=3) %>%
-          select(word3)%>%
-          as_tibble()
+      out.df <- tgtdf[wd,nomatch=0][order(-n)][,word3]
+      tl <- length(out.df)
+      if(tl>=3){
+          out.df[1:3]
+      }else if(tl==1|tl==2){
+          out.df[1:tl]
+      }else {out.df}
+     
+          # tgtdf %>%
+          # filter(word==wd) %>%
+          # arrange(desc(n))%>%
+          # filter(row_number() <=3) %>%
+          # select(word3)%>%
+          # as_tibble()
   }
   
   
@@ -169,29 +194,41 @@ server <- function(input, output, session) {
       
       tgtdf <- ngramvals$two
       #str(tgtdf)
-      out.df <- tgtdf %>%
-          filter(word1==w1) %>%
-          arrange(desc(n))%>%
-          filter(row_number() <=3) %>%
-          select(word2)%>%
-          as_tibble()
+      out.df <- tgtdf[w1,nomatch=0][order(-n)][,word2][1:3]
+      #
+      
+      tl <- length(out.df)
+      if(tl>=3){
+          out.df[1:3]
+      }else if(tl==1|tl==2){
+          out.df[1:tl]
+      }else {out.df}
+      
+      #
+      
+      
+          # filter(word1==w1) %>%
+          # arrange(desc(n))%>%
+          # filter(row_number() <=3) %>%
+          # select(word2)%>%
+          # as_tibble()
   }
   
   model_wrapper <- function(inputstring){
       OutData <- fourg_test(inptoks())
       #str(OutData)
       #length(OutData)
-      if(nrow(OutData)==0){
+      if(length(OutData)==0){
           OutData <- threeg_test(inptoks())
           #str(OutData)
       }
 
-      if(nrow(OutData)==0){
+      if(length(OutData)==0){
           OutData <- twog_test(inptoks())
           #str(OutData)
       }
 
-      if(nrow(OutData)==0){
+      if(length(OutData)==0){
           OutData <- data.frame(x="The specified phrase is not contained within the loaded dictionaries")
       }
 
@@ -274,7 +311,7 @@ server <- function(input, output, session) {
   observeEvent(input$W1,{
       x <- input$ti
       OutData <- model_wrapper(inptoks())
-      selected_word <- OutData[1,1]
+      selected_word <- OutData[1]
       updateTextInput(session,'ti',value=paste(x,selected_word))
 
   })
@@ -282,7 +319,7 @@ server <- function(input, output, session) {
   observeEvent(input$W2,{
       x <- input$ti
       OutData <- model_wrapper(inptoks())
-      selected_word <- OutData[2,1]
+      selected_word <- OutData[2]
       updateTextInput(session,'ti',value=paste(x,selected_word))
       
   })
@@ -290,7 +327,7 @@ server <- function(input, output, session) {
   observeEvent(input$W3,{
       x <- input$ti
       OutData <- model_wrapper(inptoks())
-      selected_word <- OutData[3,1]
+      selected_word <- OutData[3]
       updateTextInput(session,'ti',value=paste(x,selected_word))
       
   })
@@ -301,11 +338,12 @@ server <- function(input, output, session) {
           return()
       
       OutData <- model_wrapper(inptoks())
+      #print(OutData)
       
-      if (nrow(OutData)==3){
-          l1 <- OutData[1,1]
-          l2 <- OutData[2,1]
-          l3 <- OutData[3,1]
+      if (length(OutData)==3){
+          l1 <- OutData[1]
+          l2 <- OutData[2]
+          l3 <- OutData[3]
           
           tagList(
             column(width=11,      
@@ -313,9 +351,9 @@ server <- function(input, output, session) {
                 actionButton("W2",l2, width='33%', icon = icon('angle-double-up')),
                 actionButton("W3",l3, width='33%', icon = icon('angle-double-up')))
                 )
-      } else if (nrow(OutData)==2){
-          l1 <- OutData[1,1]
-          l2 <- OutData[2,1]
+      } else if (length(OutData)==2){
+          l1 <- OutData[1]
+          l2 <- OutData[2]
           #l3 <- OutData[3,1]
           
           tagList(
@@ -324,8 +362,8 @@ server <- function(input, output, session) {
               actionButton("W2",l2, width='49%', icon = icon('angle-double-up')))#,
               #actionButton("W3",l3, width='33%', icon = icon('angle-double-up')))
           )
-      } else if (nrow(OutData)==1 & OutData[1,1]!='The specified phrase is not contained within the loaded dictionaries'){
-          l1 <- OutData[1,1]
+      } else if (length(OutData)==1 & OutData[1]!='The specified phrase is not contained within the loaded dictionaries'){
+          l1 <- OutData[1]
           #l2 <- OutData[2,1]
           #l3 <- OutData[3,1]
           
